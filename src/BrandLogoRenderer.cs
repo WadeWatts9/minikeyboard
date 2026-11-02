@@ -5,6 +5,7 @@ using System.Drawing.Imaging;
 using System.Drawing.Text;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace MiniKeyboardCyber
 {
@@ -71,6 +72,7 @@ namespace MiniKeyboardCyber
             GraphicsState state = g.Save();
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            g.PixelOffsetMode = PixelOffsetMode.HighQuality;
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
 
             float scaleX = bounds.Width / 1024f;
@@ -79,79 +81,112 @@ namespace MiniKeyboardCyber
             g.ScaleTransform(scaleX, scaleY);
 
             // 1. Outer Chamfered Cyberpunk Keycap / Chassis Shield
-            RectangleF outerFrame = new RectangleF(32f, 32f, 960f, 960f);
-            using (GraphicsPath shieldPath = CyberTheme.CreateChamferedRect(outerFrame, 96f))
+            float margin = compactIconMode ? 16f : 32f;
+            RectangleF outerFrame = new RectangleF(margin, margin, 1024f - margin * 2f, 1024f - margin * 2f);
+            using (GraphicsPath shieldPath = CyberTheme.CreateChamferedRect(outerFrame, compactIconMode ? 120f : 96f))
             using (LinearGradientBrush bgBr = new LinearGradientBrush(
                 outerFrame,
-                Color.FromArgb(8, 13, 24),
-                Color.FromArgb(4, 6, 12),
+                Color.FromArgb(10, 18, 34),
+                Color.FromArgb(4, 7, 14),
                 135f))
             {
                 g.FillPath(bgBr, shieldPath);
 
-                // Tech grid inside shield
-                g.SetClip(shieldPath);
-                using (Pen gridPen = new Pen(Color.FromArgb(18, 0, 225, 255), 2f))
+                if (!compactIconMode)
                 {
-                    for (int i = 64; i < 1024; i += 64)
+                    g.SetClip(shieldPath);
+                    using (Pen gridPen = new Pen(Color.FromArgb(18, 0, 225, 255), 2f))
                     {
-                        g.DrawLine(gridPen, i, 0, i, 1024);
-                        g.DrawLine(gridPen, 0, i, 1024, i);
+                        for (int i = 64; i < 1024; i += 64)
+                        {
+                            g.DrawLine(gridPen, i, 0, i, 1024);
+                            g.DrawLine(gridPen, 0, i, 1024, i);
+                        }
                     }
-                }
-                g.ResetClip();
+                    g.ResetClip();
 
-                // Outer Neon Glow & Border
-                for (int i = 3; i >= 1; i--)
-                {
-                    using (Pen glowPen = new Pen(Color.FromArgb(32 * (4 - i), AcCyanBright), i * 6f))
+                    for (int i = 3; i >= 1; i--)
                     {
-                        g.DrawPath(glowPen, shieldPath);
+                        using (Pen glowPen = new Pen(Color.FromArgb(32 * (4 - i), AcCyanBright), i * 6f))
+                        {
+                            g.DrawPath(glowPen, shieldPath);
+                        }
                     }
                 }
-                using (Pen rimPen = new Pen(AcCyanBright, compactIconMode ? 12f : 6f))
+
+                using (Pen rimPen = new Pen(AcCyanBright, compactIconMode ? 28f : 6f))
                 {
                     g.DrawPath(rimPen, shieldPath);
                 }
             }
 
-            // Inner chamfered bevel
-            RectangleF innerFrame = new RectangleF(62f, 62f, 900f, 900f);
-            using (GraphicsPath innerPath = CyberTheme.CreateChamferedRect(innerFrame, 74f))
-            using (Pen innerPen = new Pen(Color.FromArgb(110, CyberTheme.NeonMagenta), compactIconMode ? 5f : 3f))
-            {
-                g.DrawPath(innerPen, innerPath);
-            }
-
-            if (!compactIconMode)
-            {
-                CyberTheme.DrawHexScrew(g, 106f, 106f, 15f);
-                CyberTheme.DrawHexScrew(g, 918f, 106f, 15f);
-                CyberTheme.DrawHexScrew(g, 106f, 918f, 15f);
-                CyberTheme.DrawHexScrew(g, 918f, 918f, 15f);
-            }
-
             if (compactIconMode)
             {
-                // Compact Icon Mode (for .ICO, Window Titlebar & Header Badge):
-                // Draw stylized mini-keyboard 3x4 + 2 knobs at bottom half and large AC Monogram at top/center
-                DrawMiniKeyboardIllustration(g, new RectangleF(130f, 575f, 764f, 325f), true);
+                // Favicon / Window Icon Mode:
+                // Super bold keycap inner bevel + stylized bottom key row + large high-contrast AC Monogram
+                RectangleF keycapDish = new RectangleF(64f, 64f, 896f, 896f);
+                using (GraphicsPath dishPath = CyberTheme.CreateRoundedRect(keycapDish, 90f))
+                using (Pen dishPen = new Pen(Color.FromArgb(150, CyberTheme.NeonMagenta), 14f))
+                {
+                    g.DrawPath(dishPen, dishPath);
+                }
 
+                // Bottom mini-keypad row indicator (4 neon keys + 1 yellow rotary knob dot)
+                float ky = 735f;
+                float kh = 145f;
+                float kw = 145f;
+                float kxStart = 104f;
+                float kGap = 24f;
+                for (int i = 0; i < 4; i++)
+                {
+                    RectangleF kr = new RectangleF(kxStart + i * (kw + kGap), ky, kw, kh);
+                    using (GraphicsPath kp = CyberTheme.CreateRoundedRect(kr, 22f))
+                    using (SolidBrush kFill = new SolidBrush(i == 0 || i == 3 ? Color.FromArgb(0, 110, 145) : Color.FromArgb(24, 42, 70)))
+                    using (Pen kPen = new Pen(AcCyanBright, 12f))
+                    {
+                        g.FillPath(kFill, kp);
+                        g.DrawPath(kPen, kp);
+                    }
+                }
+                // Rotary knob indicator on bottom-right of favicon
+                float knobCx = 852f;
+                float knobCy = ky + kh * 0.5f;
+                float knobR = 72f;
+                using (SolidBrush knobFill = new SolidBrush(Color.FromArgb(45, 25, 65)))
+                using (Pen knobPen = new Pen(CyberTheme.CyberYellow, 18f))
+                {
+                    g.FillEllipse(knobFill, knobCx - knobR, knobCy - knobR, knobR * 2f, knobR * 2f);
+                    g.DrawEllipse(knobPen, knobCx - knobR, knobCy - knobR, knobR * 2f, knobR * 2f);
+                }
+
+                // Bold AC Monogram filling the upper/center area
                 Bitmap monoBmp = GetMonogramOnly();
                 if (monoBmp != null)
                 {
-                    RectangleF monoDest = new RectangleF(112f, 105f, 800f, 485f);
+                    RectangleF monoDest = new RectangleF(82f, 108f, 860f, 565f);
                     g.DrawImage(monoBmp, monoDest);
                 }
             }
             else
             {
+                // Inner chamfered bevel
+                RectangleF innerFrame = new RectangleF(62f, 62f, 900f, 900f);
+                using (GraphicsPath innerPath = CyberTheme.CreateChamferedRect(innerFrame, 74f))
+                using (Pen innerPen = new Pen(Color.FromArgb(110, CyberTheme.NeonMagenta), 3f))
+                {
+                    g.DrawPath(innerPen, innerPath);
+                }
+
+                CyberTheme.DrawHexScrew(g, 106f, 106f, 15f);
+                CyberTheme.DrawHexScrew(g, 918f, 106f, 15f);
+                CyberTheme.DrawHexScrew(g, 106f, 918f, 15f);
+                CyberTheme.DrawHexScrew(g, 918f, 918f, 15f);
+
                 // Full Master Application Logo Mode (1024x1024):
                 // 1) Top / Center: Authentic "AC - ALAN CANTO" Brand Logo
                 Bitmap fullBrand = GetFullBrandMark();
                 if (fullBrand != null)
                 {
-                    // Subtle ambient cyan glow behind AC logo
                     using (GraphicsPath glowEllipse = new GraphicsPath())
                     {
                         glowEllipse.AddEllipse(200f, 60f, 624f, 480f);
@@ -187,7 +222,6 @@ namespace MiniKeyboardCyber
 
         private static void DrawMiniKeyboardIllustration(Graphics g, RectangleF boardRect, bool simplified)
         {
-            // Neon underglow around the mini-keyboard chassis
             for (int i = 3; i >= 1; i--)
             {
                 RectangleF glowR = RectangleF.Inflate(boardRect, i * 4f, i * 4f);
@@ -198,7 +232,6 @@ namespace MiniKeyboardCyber
                 }
             }
 
-            // Keyboard Acrylic Chassis
             using (GraphicsPath boardPath = CyberTheme.CreateChamferedRect(boardRect, 26f))
             using (LinearGradientBrush boardFill = new LinearGradientBrush(
                 boardRect,
@@ -227,7 +260,6 @@ namespace MiniKeyboardCyber
                 boardRect.Width - padX * 2f,
                 boardRect.Height - padY * 2f);
 
-            // Left 66%: 3 rows x 4 columns of mechanical keys (12 keys)
             float keysW = inner.Width * 0.65f;
             float knobsW = inner.Width - keysW - 22f;
 
@@ -282,7 +314,6 @@ namespace MiniKeyboardCyber
                 }
             }
 
-            // Right 34%: 2 Rotary Encoders (Knob 1 & Knob 2)
             float knobsLeft = inner.Left + keysW + 22f;
             float knobCx = knobsLeft + knobsW * 0.5f;
             float knobR = Math.Min(knobsW * 0.38f, inner.Height * 0.21f);
@@ -318,11 +349,11 @@ namespace MiniKeyboardCyber
 
         public static Icon CreateRuntimeWindowIcon()
         {
-            using (Bitmap bmp = RenderMasterLogoBitmap(64, false, true))
+            using (MemoryStream ms = new MemoryStream())
             {
-                IntPtr hIcon = bmp.GetHicon();
-                Icon tempIcon = Icon.FromHandle(hIcon);
-                return (Icon)tempIcon.Clone();
+                WriteMultiResolutionIconStream(ms, new int[] { 16, 24, 32, 48, 64 });
+                ms.Position = 0;
+                return new Icon(ms, 16, 16);
             }
         }
 
@@ -340,54 +371,142 @@ namespace MiniKeyboardCyber
             {
                 string icoDir = Path.GetDirectoryName(icoPath);
                 if (!string.IsNullOrEmpty(icoDir)) Directory.CreateDirectory(icoDir);
-                WriteMultiResolutionIconFile(icoPath, new int[] { 256, 64, 48, 32, 16 });
+                using (FileStream fs = new FileStream(icoPath, FileMode.Create, FileAccess.Write))
+                {
+                    WriteMultiResolutionIconStream(fs, new int[] { 256, 64, 48, 32, 24, 16 });
+                }
             }
         }
 
-        private static void WriteMultiResolutionIconFile(string icoPath, int[] sizes)
+        /// <summary>
+        /// Writes a standard Windows .ICO stream using 32-bit BGRA DIB frames for sizes &lt; 256 (for 100% Win32/WinForms titlebar compatibility) and PNG for 256x256.
+        /// </summary>
+        private static void WriteMultiResolutionIconStream(Stream outStream, int[] sizes)
         {
-            byte[][] pngFrames = new byte[sizes.Length][];
+            byte[][] frameData = new byte[sizes.Length][];
             for (int i = 0; i < sizes.Length; i++)
             {
-                using (Bitmap frameBmp = RenderMasterLogoBitmap(sizes[i], false, true))
-                using (MemoryStream ms = new MemoryStream())
+                int s = sizes[i];
+                using (Bitmap frameBmp = RenderMasterLogoBitmap(s, false, true))
                 {
-                    frameBmp.Save(ms, ImageFormat.Png);
-                    pngFrames[i] = ms.ToArray();
+                    if (s >= 256)
+                    {
+                        using (MemoryStream ms = new MemoryStream())
+                        {
+                            frameBmp.Save(ms, ImageFormat.Png);
+                            frameData[i] = ms.ToArray();
+                        }
+                    }
+                    else
+                    {
+                        frameData[i] = ConvertBitmapTo32BppIconDib(frameBmp);
+                    }
                 }
             }
 
-            using (FileStream fs = new FileStream(icoPath, FileMode.Create, FileAccess.Write))
-            using (BinaryWriter bw = new BinaryWriter(fs))
+            BinaryWriter bw = new BinaryWriter(outStream);
+            bw.Write((ushort)0);
+            bw.Write((ushort)1);
+            bw.Write((ushort)sizes.Length);
+
+            int dataOffset = 6 + (16 * sizes.Length);
+            for (int i = 0; i < sizes.Length; i++)
             {
-                bw.Write((ushort)0);
+                int s = sizes[i];
+                byte dimByte = (s >= 256) ? (byte)0 : (byte)s;
+                int byteCount = frameData[i].Length;
+
+                bw.Write(dimByte);
+                bw.Write(dimByte);
+                bw.Write((byte)0);
+                bw.Write((byte)0);
                 bw.Write((ushort)1);
-                bw.Write((ushort)sizes.Length);
+                bw.Write((ushort)32);
+                bw.Write((uint)byteCount);
+                bw.Write((uint)dataOffset);
 
-                int dataOffset = 6 + (16 * sizes.Length);
-                for (int i = 0; i < sizes.Length; i++)
+                dataOffset += byteCount;
+            }
+
+            for (int i = 0; i < sizes.Length; i++)
+            {
+                bw.Write(frameData[i]);
+            }
+            bw.Flush();
+        }
+
+        private static byte[] ConvertBitmapTo32BppIconDib(Bitmap bmp)
+        {
+            int w = bmp.Width;
+            int h = bmp.Height;
+            int xorStride = w * 4;
+            int andStride = ((w + 31) / 32) * 4;
+            int totalBytes = 40 + (xorStride * h) + (andStride * h);
+
+            byte[] dib = new byte[totalBytes];
+            using (MemoryStream ms = new MemoryStream(dib))
+            using (BinaryWriter bw = new BinaryWriter(ms))
+            {
+                // BITMAPINFOHEADER (40 bytes)
+                bw.Write((uint)40);
+                bw.Write((int)w);
+                bw.Write((int)(h * 2)); // Combined height of XOR + AND masks
+                bw.Write((ushort)1);    // Planes
+                bw.Write((ushort)32);   // BitCount
+                bw.Write((uint)0);      // BI_RGB
+                bw.Write((uint)(xorStride * h + andStride * h));
+                bw.Write((int)0);
+                bw.Write((int)0);
+                bw.Write((uint)0);
+                bw.Write((uint)0);
+
+                // Bottom-up BGRA pixels
+                for (int y = h - 1; y >= 0; y--)
                 {
-                    int s = sizes[i];
-                    byte dimByte = (s >= 256) ? (byte)0 : (byte)s;
-                    int byteCount = pngFrames[i].Length;
-
-                    bw.Write(dimByte);
-                    bw.Write(dimByte);
-                    bw.Write((byte)0);
-                    bw.Write((byte)0);
-                    bw.Write((ushort)1);
-                    bw.Write((ushort)32);
-                    bw.Write((uint)byteCount);
-                    bw.Write((uint)dataOffset);
-
-                    dataOffset += byteCount;
+                    for (int x = 0; x < w; x++)
+                    {
+                        Color c = bmp.GetPixel(x, y);
+                        bw.Write(c.B);
+                        bw.Write(c.G);
+                        bw.Write(c.R);
+                        bw.Write(c.A);
+                    }
                 }
 
-                for (int i = 0; i < sizes.Length; i++)
+                // Bottom-up 1-bpp AND mask
+                for (int y = h - 1; y >= 0; y--)
                 {
-                    bw.Write(pngFrames[i]);
+                    int rowBytesWritten = 0;
+                    byte curByte = 0;
+                    int bitIdx = 7;
+                    for (int x = 0; x < w; x++)
+                    {
+                        if (bmp.GetPixel(x, y).A < 16)
+                        {
+                            curByte |= (byte)(1 << bitIdx);
+                        }
+                        bitIdx--;
+                        if (bitIdx < 0)
+                        {
+                            bw.Write(curByte);
+                            rowBytesWritten++;
+                            curByte = 0;
+                            bitIdx = 7;
+                        }
+                    }
+                    if (bitIdx != 7)
+                    {
+                        bw.Write(curByte);
+                        rowBytesWritten++;
+                    }
+                    while (rowBytesWritten < andStride)
+                    {
+                        bw.Write((byte)0);
+                        rowBytesWritten++;
+                    }
                 }
             }
+            return dib;
         }
     }
 }

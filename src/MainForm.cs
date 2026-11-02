@@ -1511,11 +1511,26 @@ namespace MiniKeyboardCyber
         public void GenerateDocumentationAssets(string outputDir)
         {
             Directory.CreateDirectory(outputDir);
+
+            // 1. Generate Logo & Multi-Resolution .ICO first
+            string icoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_icon.ico");
+            BrandLogoRenderer.SaveApplicationLogoAssets(Path.Combine(outputDir, "logo_aplicacion_ac.png"), icoPath);
+
+            try
+            {
+                Icon = new Icon(icoPath);
+            }
+            catch
+            {
+            }
+
             Show();
+            Activate();
+            BringToFront();
             Refresh();
             Application.DoEvents();
 
-            // 1. Main view with Virtual Keyboard tab + Productivity profile
+            // 2. Main view with Virtual Keyboard tab + Productivity profile
             SelectLayer(0);
             SelectSlot(8); // Captura de pantalla
             SwitchTab(0);
@@ -1523,14 +1538,14 @@ namespace MiniKeyboardCyber
             Application.DoEvents();
             CaptureFormBitmap(Path.Combine(outputDir, "interfaz_principal_cyberpunk.png"));
 
-            // 2. Quick Shortcuts & Symbols tab
+            // 3. Quick Shortcuts & Symbols tab
             SelectSlot(1);
             SwitchTab(1);
             Refresh();
             Application.DoEvents();
             CaptureFormBitmap(Path.Combine(outputDir, "pestana_atajos_rapidos.png"));
 
-            // 3. Multimedia & Knobs configuration tab (Layer 2 Streamer profile)
+            // 4. Multimedia & Knobs configuration tab (Layer 2 Streamer profile)
             SelectLayer(1);
             SelectSlot(15); // Knob 1 Right
             SwitchTab(2);
@@ -1538,12 +1553,9 @@ namespace MiniKeyboardCyber
             Application.DoEvents();
             CaptureFormBitmap(Path.Combine(outputDir, "pestana_multimedia_knobs.png"));
 
-            // 4. Generated Reference Cheat-Sheet Image (Productivity & Streamer) + Brand Logo Assets
+            // 5. Generated Reference Cheat-Sheet Image (Productivity & Streamer)
             ReferenceImageGenerator.SaveProfileCheatSheet(_layers[0], Path.Combine(outputDir, "mapa_referencia_generado.png"));
             ReferenceImageGenerator.SaveProfileCheatSheet(_layers[1], Path.Combine(outputDir, "mapa_referencia_streamer.png"));
-
-            string icoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_icon.ico");
-            BrandLogoRenderer.SaveApplicationLogoAssets(Path.Combine(outputDir, "logo_aplicacion_ac.png"), icoPath);
         }
 
         private void CaptureFormBitmap(string filePath)
@@ -1551,6 +1563,11 @@ namespace MiniKeyboardCyber
             using (Bitmap bmp = new Bitmap(Width, Height, PixelFormat.Format32bppArgb))
             {
                 DrawToBitmap(bmp, new Rectangle(0, 0, Width, Height));
+                // Ensure the non-client window titlebar favicon is rendered with crisp high-DPI anti-aliasing
+                using (Graphics g = Graphics.FromImage(bmp))
+                {
+                    BrandLogoRenderer.DrawAcKeyboardEmblem(g, new RectangleF(7f, 6f, 18f, 18f), false, true);
+                }
                 bmp.Save(filePath, ImageFormat.Png);
             }
         }
