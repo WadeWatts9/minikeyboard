@@ -1,4 +1,8 @@
-# ⚡ MINI KeyBoard — Cyberpunk Control Studio (Edición en Español)
+# ⚡ AC // MINI KeyBoard — Cyberpunk Control Studio (Edición en Español)
+
+<p align="center">
+  <img src="docs/capturas/logo_aplicacion_ac.png" alt="Logo Oficial AC Mini Keyboard Studio" width="380" />
+</p>
 
 ![Interfaz Principal Cyberpunk](docs/capturas/interfaz_principal_cyberpunk.png)
 
@@ -85,18 +89,21 @@ El miniteclado cuenta con **12 interruptores mecánicos** (`Tecla 1` a `Tecla 12
 
 ```text
 minikeyboard/
-├── MINI KeyBoard.exe               # Ejecutable portable listo para usar
+├── MINI KeyBoard.exe               # Ejecutable portable con icono y recursos AC integrados
 ├── MINI KeyBoard.exe.config        # Configuración de runtime .NET
+├── app_icon.ico                    # Icono multirresolución (256px a 16px) AC + Miniteclado
 ├── HidLibrary.dll                  # Librería de comunicación USB HID
+├── assets/                         # Recursos gráficos de marca (Alan Canto AC)
 ├── src/                            # Código fuente modular en C#
 │   ├── Program.cs                  # Punto de entrada y CLI de generación documental
 │   ├── MainForm.cs                 # Interfaz principal Cyberpunk en español
+│   ├── BrandLogoRenderer.cs        # Renderizador del logo AC + Miniteclado e icono .ICO
 │   ├── KeypadPreviewControl.cs     # Control interactivo de vista previa (12 teclas + 2 knobs)
 │   ├── ReferenceImageGenerator.cs  # Motor GDI+ generador del mapa de referencia PNG
 │   ├── HidDeviceController.cs      # Controlador e implementación del protocolo USB HID
 │   ├── Models.cs                   # Modelos de perfiles, teclas, macros y mapeo HID
 │   └── CyberTheme.cs               # Paleta de colores neón y geometría vectorial HUD
-├── docs/capturas/                  # Capturas de pantalla de la interfaz y mapas generados
+├── docs/capturas/                  # Capturas de pantalla, logo de aplicación y mapas generados
 └── imagenes referencia/            # Imágenes de referencia del hardware original
 ```
 

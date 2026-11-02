@@ -82,11 +82,8 @@ namespace MiniKeyboardCyber
                 g.DrawPath(hPen, hp);
             }
 
-            // Neon magenta accent bar on left of header
-            using (SolidBrush magBr = new SolidBrush(CyberTheme.NeonMagenta))
-            {
-                g.FillRectangle(magBr, 68f, 40f, 8f, 48f);
-            }
+            // AC + Mini-Keyboard Brand Emblem on left of header
+            BrandLogoRenderer.DrawAcKeyboardEmblem(g, new RectangleF(68f, 33f, 62f, 62f), false, true);
 
             using (Font titleFont = new Font("Segoe UI", 22f, FontStyle.Bold))
             using (Font subFont = new Font("Consolas", 11f, FontStyle.Bold))
@@ -95,13 +92,13 @@ namespace MiniKeyboardCyber
             using (SolidBrush yellowBr = new SolidBrush(CyberTheme.CyberYellow))
             {
                 string title = string.Format("MAPA DE REFERENCIA // {0}", (profile.ProfileName ?? "PERFIL PERSONALIZADO").ToUpperInvariant());
-                g.DrawString(title, titleFont, whiteBr, 88f, 32f);
+                g.DrawString(title, titleFont, whiteBr, 142f, 32f);
 
                 string sub = string.Format("CAPA ACTIVA: CAPA {0:00}   |   ILUMINACIÓN: {1}   |   BOTONES CONFIGURADOS: {2}/18",
                     profile.LayerIndex,
                     profile.GetLedModeDescription().ToUpperInvariant(),
                     profile.GetConfiguredCount());
-                g.DrawString(sub, subFont, cyanBr, 90f, 73f);
+                g.DrawString(sub, subFont, cyanBr, 144f, 73f);
 
                 // Right badge
                 RectangleF badgeRect = new RectangleF(width - 355f, 40f, 280f, 48f);

@@ -71,6 +71,13 @@ namespace MiniKeyboardCyber
             Font = new Font("Segoe UI", 9.5f, FontStyle.Regular);
             KeyPreview = true;
             DoubleBuffered = true;
+            try
+            {
+                Icon = BrandLogoRenderer.CreateRuntimeWindowIcon();
+            }
+            catch
+            {
+            }
 
             // Initialize 3 layers: Layer 1 pre-loaded with Productivity preset so user sees a rich example immediately
             _layers[0] = LayerProfile.CreatePresetProductivity(1);
@@ -104,27 +111,24 @@ namespace MiniKeyboardCyber
                 {
                     e.Graphics.DrawLine(cyanLine, 0, _headerPanel.Height - 1, _headerPanel.Width, _headerPanel.Height - 1);
                 }
-                using (SolidBrush magBar = new SolidBrush(CyberTheme.NeonMagenta))
-                {
-                    e.Graphics.FillRectangle(magBar, 12, 12, 6, 44);
-                }
+                BrandLogoRenderer.DrawAcKeyboardEmblem(e.Graphics, new RectangleF(14f, 7f, 52f, 52f), false, true);
             };
 
             Label lblTitle = new Label
             {
-                Text = "⚡ MINI KEYBOARD // CYBERPUNK STUDIO",
+                Text = "AC // MINI KEYBOARD STUDIO",
                 Font = new Font("Segoe UI", 15f, FontStyle.Bold),
                 ForeColor = CyberTheme.TextPrimary,
-                Location = new Point(26, 8),
+                Location = new Point(74, 8),
                 AutoSize = true
             };
 
             Label lblSubtitle = new Label
             {
-                Text = "CONTROLADOR DE MACROS USB HID · 12 TECLAS + 2 KNOBS PULSABLES · MEMORIA INDEPENDIENTE",
+                Text = "ALAN CANTO · CONTROLADOR DE MACROS USB HID (12 TECLAS + 2 KNOBS)",
                 Font = new Font("Consolas", 8.2f, FontStyle.Bold),
                 ForeColor = CyberTheme.NeonCyan,
-                Location = new Point(28, 39),
+                Location = new Point(76, 39),
                 AutoSize = true
             };
 
@@ -1534,9 +1538,12 @@ namespace MiniKeyboardCyber
             Application.DoEvents();
             CaptureFormBitmap(Path.Combine(outputDir, "pestana_multimedia_knobs.png"));
 
-            // 4. Generated Reference Cheat-Sheet Image (Productivity & Streamer)
+            // 4. Generated Reference Cheat-Sheet Image (Productivity & Streamer) + Brand Logo Assets
             ReferenceImageGenerator.SaveProfileCheatSheet(_layers[0], Path.Combine(outputDir, "mapa_referencia_generado.png"));
             ReferenceImageGenerator.SaveProfileCheatSheet(_layers[1], Path.Combine(outputDir, "mapa_referencia_streamer.png"));
+
+            string icoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_icon.ico");
+            BrandLogoRenderer.SaveApplicationLogoAssets(Path.Combine(outputDir, "logo_aplicacion_ac.png"), icoPath);
         }
 
         private void CaptureFormBitmap(string filePath)
